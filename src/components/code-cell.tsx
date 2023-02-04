@@ -1,46 +1,61 @@
-import React, { useEffect, useState } from "react";
-import bundler from "../bundler";
-import CodeEditor from "./code-editor";
-import Preview from "./preview";
-import Resizable from "./resizable";
+import { useState, useEffect } from 'react';
+import CodeEditor from './code-editor';
+import Preview from './preview';
+import bundle from '../bundler';
+import Resizable from './resizable';
+import './code-cell.css';
+
+const REACT_APP_INIT = `import React from 'react';
+import ReactDOM from 'react-dom';
+
+const App = ()=>{
+  return <div>This is s ReactJS app</div>;
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));`;
 
 const CodeCell = () => {
-  const [input, setInput] = useState("");
-  const [code, setCode] = useState("");
-  const [error, setError] = useState("");
+  const [code, setCode] = useState('');
+  const [err, setErr] = useState('');
+  const [input, setInput] = useState('');
+  const [initialValue, setInitialValue] = useState('');
 
-  // debounce the bundling of user defined code
   useEffect(() => {
-    const timeout = setTimeout(async () => {
-      const output = await bundler(input);
-      setError(output.error);
-      setCode(output.code);
-    }, 3000);
+    const timer = setTimeout(async () => {
+      window.history.replaceState(null, '', `?data=${btoa(input)}`);
+      const output = await bundle(input);
+      if (output) {
+        setCode(output.code);
+        setErr(output.err);
+      }
+    }, 750);
+
     return () => {
-      clearTimeout(timeout);
+      clearTimeout(timer);
     };
   }, [input]);
 
+  useEffect(() => {
+    const codeFromUrlParamData = window.location.search.split('data=')[1];
+    if (codeFromUrlParamData) {
+      const decodedCode = atob(codeFromUrlParamData);
+      setInitialValue(decodedCode);
+      setInput(decodedCode);
+    } else {
+      setInitialValue(REACT_APP_INIT);
+      setInput(REACT_APP_INIT);
+    }
+  }, []);
+
   return (
-    <div
-      className="container"
-      style={{ display: "flex", flexDirection: "row" }}
-    >
-      <Resizable direction="horizontal">
+    <div id="code-cell">
+      <Resizable>
         <CodeEditor
-          initialValue={`import React from 'react';
-            import ReactDOM from 'react-dom';
-            
-            const App = ()=>{
-              return <div>This is s ReactJS app</div>;
-            }
-            
-            ReactDOM.render(<App/>, document.getElementById('root'));`}
+          initialValue={initialValue}
           onChange={(value) => setInput(value)}
         />
       </Resizable>
-
-      <Preview code={code} error={error} />
+      <Preview code={code} err={err} />
     </div>
   );
 };

@@ -1,62 +1,66 @@
-import * as esbuild from "esbuild-wasm";
-import axios from "axios";
-import localForage from "localforage";
+import * as esbuild from 'esbuild-wasm';
+import axios from 'axios';
+import localForage from 'localforage';
 
-const fileCache = localForage.createInstance({ name: "filecache" });
+const fileCache = localForage.createInstance({
+  name: 'filecache',
+});
 
-export const fetchPlugin = (input: string) => {
+export const fetchPlugin = (inputCode: string) => {
   return {
-    name: "fetch-plugin",
+    name: 'fetch-plugin',
     setup(build: esbuild.PluginBuild) {
-      // init load
       build.onLoad({ filter: /(^index\.js$)/ }, () => {
         return {
-          loader: "jsx",
-          contents: input
+          loader: 'jsx',
+          contents: inputCode,
         };
       });
 
-      // caching
       build.onLoad({ filter: /.*/ }, async (args: any) => {
-        const cachedFile = await fileCache.getItem<esbuild.OnLoadResult>(
+        const cachedResult = await fileCache.getItem<esbuild.OnLoadResult>(
           args.path
         );
-        if (cachedFile) return cachedFile;
+
+        if (cachedResult) {
+          return cachedResult;
+        }
       });
 
       build.onLoad({ filter: /.css$/ }, async (args: any) => {
         const { data, request } = await axios.get(args.path);
-
-        const escapedCss = data
-          .replace(/\n/g, "")
+        const escaped = data
+          .replace(/\n/g, '')
           .replace(/"/g, '\\"')
           .replace(/'/g, "\\'");
-
         const contents = `
-            const style = document.createElement('style');
-            style.innerText = '${escapedCss}';
-            document.head.appendChild(style);
-          `;
+          const style = document.createElement('style');
+          style.innerText = '${escaped}';
+          document.head.appendChild(style);
+        `;
 
         const result: esbuild.OnLoadResult = {
-          loader: "jsx",
+          loader: 'jsx',
           contents,
-          resolveDir: new URL("./", request.responseURL).pathname
+          resolveDir: new URL('./', request.responseURL).pathname,
         };
         await fileCache.setItem(args.path, result);
+
         return result;
       });
 
       build.onLoad({ filter: /.*/ }, async (args: any) => {
         const { data, request } = await axios.get(args.path);
+
         const result: esbuild.OnLoadResult = {
-          loader: "jsx",
+          loader: 'jsx',
           contents: data,
-          resolveDir: new URL("./", request.responseURL).pathname
+          resolveDir: new URL('./', request.responseURL).pathname,
         };
         await fileCache.setItem(args.path, result);
+
         return result;
       });
-    }
+    },
   };
 };
