@@ -5,14 +5,30 @@ import bundle from '../bundler';
 import Resizable from './resizable';
 import './code-cell.css';
 
-const REACT_APP_INIT = `import React from 'react';
-import ReactDOM from 'react-dom';
+const REACT_APP_INIT = `import React from 'react@^18';
+import ReactDOM from 'react-dom@^18';
+import styled from 'styled-components';
 
-const App = ()=>{
-  return <div>This is s ReactJS app</div>;
-}
+const Title = styled.h1\`
+  font-size: 1.5em;
+  text-align: center;
+  color: palevioletred;
+\`;
 
-ReactDOM.render(<App/>, document.getElementById('root'));`;
+const Wrapper = styled.section\`
+  padding: 4em;
+  background: papayawhip;
+\`;
+
+const App = () => {
+  return (
+    <Wrapper>
+      <Title>Hello World!</Title>
+    </Wrapper>
+  );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));`;
 
 const CodeCell = () => {
   const [code, setCode] = useState('');
@@ -28,7 +44,7 @@ const CodeCell = () => {
         setCode(output.code);
         setErr(output.err);
       }
-    }, 750);
+    }, 2000);
 
     return () => {
       clearTimeout(timer);
