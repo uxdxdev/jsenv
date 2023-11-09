@@ -11,7 +11,6 @@
   border: 1px solid #37414b;
 }
 
-/* #console {
-  background-color: black;
-  height: 20%;
-} */
+#code-console * {
+  background: #202124;
+}
