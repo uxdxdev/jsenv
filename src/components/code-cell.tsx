@@ -4,8 +4,8 @@ import Preview from "./preview";
 import bundle from "../bundler";
 import Resizable from "./resizable";
 import { Console, Hook, Unhook } from "console-feed";
-
 import "./code-cell.css";
+import ErrorBoundary from "./error-boundary";
 
 const REACT_APP_INIT = `import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
@@ -108,6 +108,21 @@ const App = () => {
 
 ReactDOM.render(<App />, document.getElementById('root'));`;
 
+function getNumberStringWithWidth(num: Number, width: number) {
+  const str = num.toString();
+  if (width > str.length) return "0".repeat(width - str.length) + str;
+  return str.substr(0, width);
+}
+
+function getTimestamp() {
+  const date = new Date();
+  const h = getNumberStringWithWidth(date.getHours(), 2);
+  const min = getNumberStringWithWidth(date.getMinutes(), 2);
+  const sec = getNumberStringWithWidth(date.getSeconds(), 2);
+  const ms = getNumberStringWithWidth(date.getMilliseconds(), 3);
+  return `${h}:${min}:${sec}.${ms}`;
+}
+
 const CodeCell = () => {
   const [code, setCode] = useState("");
   const [err, setErr] = useState("");
@@ -121,6 +136,7 @@ const CodeCell = () => {
     const hookedConsole = Hook(
       iframe.current.contentWindow.console,
       (log) => {
+        log.timestamp = getTimestamp();
         // @ts-ignore
         setLogs((currLogs) => [...currLogs, log]);
       },
@@ -156,6 +172,11 @@ const CodeCell = () => {
     }
   }, []);
 
+  // reset console feed when code is re-evaluated
+  useEffect(() => {
+    setLogs([]);
+  }, [code]);
+
   return (
     <>
       <div id="code-cell">
@@ -165,7 +186,9 @@ const CodeCell = () => {
         <Preview code={code} err={err} iframe={iframe} />
       </div>
       <div id="code-console">
-        <Console logs={logs} variant="dark" />
+        <ErrorBoundary>
+          <Console logs={logs} variant="dark" />
+        </ErrorBoundary>
       </div>
     </>
   );

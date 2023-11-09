@@ -83,7 +83,7 @@ const html = `
       </div>
     </div>
   </div>
-  <script>
+  <script>    
     const handleError = (err) => {
       const root = document.querySelector('#root');
       root.innerHTML = '<div style="color: red;"><h4>Runtime Error</h4>' + err + '</div>';
