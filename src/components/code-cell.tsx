@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
-import CodeEditor from './code-editor';
-import Preview from './preview';
-import bundle from '../bundler';
-import Resizable from './resizable';
-import './code-cell.css';
+import { useState, useEffect, useRef } from "react";
+import CodeEditor from "./code-editor";
+import Preview from "./preview";
+import bundle from "../bundler";
+import Resizable from "./resizable";
+import { Console, Hook, Unhook } from "console-feed";
+
+import "./code-cell.css";
 
 const REACT_APP_INIT = `import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
@@ -81,7 +83,11 @@ const Count = () => {
   return (
     <Counter>
       <CountValue>{count}</CountValue>
-      <Button onClick={() => increment()}>Click me</Button>
+      <Button onClick={() => {
+          increment()
+          console.log('button clicked');
+        }
+      }>Click me</Button>
     </Counter>
   );
 };
@@ -103,14 +109,29 @@ const App = () => {
 ReactDOM.render(<App />, document.getElementById('root'));`;
 
 const CodeCell = () => {
-  const [code, setCode] = useState('');
-  const [err, setErr] = useState('');
-  const [input, setInput] = useState('');
-  const [initialValue, setInitialValue] = useState('');
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  const [input, setInput] = useState("");
+  const [initialValue, setInitialValue] = useState("");
+  const iframe = useRef<any>();
+  const [logs, setLogs] = useState([]);
+
+  // @ts-ignore
+  useEffect(() => {
+    const hookedConsole = Hook(
+      iframe.current.contentWindow.console,
+      (log) => {
+        // @ts-ignore
+        setLogs((currLogs) => [...currLogs, log]);
+      },
+      false
+    );
+    return () => Unhook(hookedConsole);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
-      window.history.replaceState(null, '', `?data=${btoa(input)}`);
+      window.history.replaceState(null, "", `?data=${btoa(input)}`);
       const output = await bundle(input);
       if (output) {
         setCode(output.code);
@@ -124,7 +145,7 @@ const CodeCell = () => {
   }, [input]);
 
   useEffect(() => {
-    const codeFromUrlParamData = window.location.search.split('data=')[1];
+    const codeFromUrlParamData = window.location.search.split("data=")[1];
     if (codeFromUrlParamData) {
       const decodedCode = atob(codeFromUrlParamData);
       setInitialValue(decodedCode);
@@ -136,15 +157,17 @@ const CodeCell = () => {
   }, []);
 
   return (
-    <div id="code-cell">
-      <Resizable>
-        <CodeEditor
-          initialValue={initialValue}
-          onChange={(value) => setInput(value)}
-        />
-      </Resizable>
-      <Preview code={code} err={err} />
-    </div>
+    <>
+      <div id="code-cell">
+        <Resizable>
+          <CodeEditor initialValue={initialValue} onChange={(value) => setInput(value)} />
+        </Resizable>
+        <Preview code={code} err={err} iframe={iframe} />
+      </div>
+      <div id="code-console">
+        <Console logs={logs} variant="dark" />
+      </div>
+    </>
   );
 };
 

@@ -16,6 +16,7 @@
     "@types/react-resizable": "1.7.2",
     "axios": "^0.21.1",
     "bulmaswatch": "0.8.1",
+    "console-feed": "^3.5.0",
     "esbuild-wasm": "0.8.27",
     "jscodeshift": "0.11.0",
     "localforage": "^1.9.0",
