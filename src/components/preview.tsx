@@ -85,10 +85,15 @@ const html = `
         </div>
       </div>
       <script>
+        const out = (type) => (str) => {            
+          window.top.postMessage({ origin: 'preview', type, message: str }, '*');
+        }
         window.console = {
-            log: function(str){            
-                window.top.postMessage({type: 'preview', message: str}, '*');
-            }
+            log: out('log'),
+            error: out('error'),
+            info: out('info'),
+            warn: out('warn'),
+            clear: out('clear')     
         };
 
         const handleError = (err) => {
@@ -117,6 +122,8 @@ const html = `
 const Preview: React.FC<PreviewProps> = ({ err, code, setLogs }) => {
   const iframeRef = useRef<any>();
 
+  // reset init the iframe content before
+  // the iframe calls eval on the latest user code
   useEffect(() => {
     iframeRef.current.srcdoc = html;
 
@@ -125,20 +132,26 @@ const Preview: React.FC<PreviewProps> = ({ err, code, setLogs }) => {
     }, 50);
   }, [iframeRef, code, setLogs]);
 
+  // get console output from preview and send
+  // to console-feed component by setting the logs
   useEffect(() => {
     window.addEventListener(
       "message",
       function (event) {
-        if (event.data.type === "preview") {
-          // @ts-ignore
-          setLogs((currLogs) => [
-            ...currLogs,
-            {
-              method: "result",
-              data: [event.data.message],
-              timestamp: getTimestamp(),
-            },
-          ]);
+        if (event.data.origin === "preview") {
+          if (event.data.type === "clear") {
+            setLogs([]);
+          } else {
+            // @ts-ignore
+            setLogs((currLogs) => [
+              ...currLogs,
+              {
+                method: event.data.type,
+                data: [event.data.message],
+                timestamp: getTimestamp(),
+              },
+            ]);
+          }
         }
       },
       false
