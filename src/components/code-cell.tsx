@@ -118,7 +118,9 @@ const CodeCell = () => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       window.history.replaceState(null, "", `?data=${btoa(input)}`);
+      setCode("");
       const output = await bundle(input);
+
       if (output) {
         setCode(output.code);
         setErr(output.err);
