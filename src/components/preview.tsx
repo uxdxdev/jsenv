@@ -148,7 +148,7 @@ const Preview: React.FC<PreviewProps> = ({ err, code, setLogs }) => {
   return (
     <>
       <div className="preview-wrapper">
-        <iframe title="preview" ref={iframeRef} sandbox="allow-same-origin allow-scripts" srcDoc={html} />
+        <iframe title="preview" ref={iframeRef} srcDoc={html} />
         {err && <div className="preview-error">{err}</div>}
       </div>
     </>
