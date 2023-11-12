@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import CodeEditor from "./code-editor";
 import Preview from "./preview";
 import bundle from "../bundler";
 import Resizable from "./resizable";
-import { Console, Hook, Unhook } from "console-feed";
+import { Console } from "console-feed";
+
 import "./code-cell.css";
-import ErrorBoundary from "./error-boundary";
 
 const REACT_APP_INIT = `import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
@@ -108,42 +108,12 @@ const App = () => {
 
 ReactDOM.render(<App />, document.getElementById('root'));`;
 
-function getNumberStringWithWidth(num: Number, width: number) {
-  const str = num.toString();
-  if (width > str.length) return "0".repeat(width - str.length) + str;
-  return str.substr(0, width);
-}
-
-function getTimestamp() {
-  const date = new Date();
-  const h = getNumberStringWithWidth(date.getHours(), 2);
-  const min = getNumberStringWithWidth(date.getMinutes(), 2);
-  const sec = getNumberStringWithWidth(date.getSeconds(), 2);
-  const ms = getNumberStringWithWidth(date.getMilliseconds(), 3);
-  return `${h}:${min}:${sec}.${ms}`;
-}
-
 const CodeCell = () => {
   const [code, setCode] = useState("");
   const [err, setErr] = useState("");
   const [input, setInput] = useState("");
   const [initialValue, setInitialValue] = useState("");
-  const iframe = useRef<any>();
   const [logs, setLogs] = useState([]);
-
-  // @ts-ignore
-  useEffect(() => {
-    const hookedConsole = Hook(
-      iframe.current.contentWindow.console,
-      (log) => {
-        log.timestamp = getTimestamp();
-        // @ts-ignore
-        setLogs((currLogs) => [...currLogs, log]);
-      },
-      false
-    );
-    return () => Unhook(hookedConsole);
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -172,23 +142,16 @@ const CodeCell = () => {
     }
   }, []);
 
-  // reset console feed when code is re-evaluated
-  useEffect(() => {
-    setLogs([]);
-  }, [code]);
-
   return (
     <>
       <div id="code-cell">
         <Resizable>
           <CodeEditor initialValue={initialValue} onChange={(value) => setInput(value)} />
         </Resizable>
-        <Preview code={code} err={err} iframe={iframe} />
+        <Preview err={err} code={code} setLogs={setLogs} />
       </div>
       <div id="code-console">
-        <ErrorBoundary>
-          <Console logs={logs} variant="dark" />
-        </ErrorBoundary>
+        <Console logs={logs} variant="dark" />
       </div>
     </>
   );
