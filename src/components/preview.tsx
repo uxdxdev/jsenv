@@ -147,7 +147,7 @@ const Preview: React.FC<PreviewProps> = ({ err, code, setLogs }) => {
               ...currLogs,
               {
                 method: event.data.type,
-                data: [event.data.message],
+                data: event.data.message,
                 timestamp: getTimestamp(),
               },
             ]);
