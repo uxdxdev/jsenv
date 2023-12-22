@@ -85,8 +85,12 @@ const html = `
         </div>
       </div>
       <script>
-        const out = (type) => (...str) => {            
-          window.top.postMessage({ origin: 'preview', type, message: str }, '*');
+        const out = (type) => (...str) => {
+          try {
+            window.top.postMessage({ origin: 'preview', type, message: str }, '*');
+          } catch(e){
+            window.top.postMessage({ origin: 'preview', type: 'error', message: [e.message] }, '*');
+          }
         }
         window.console = {
             log: out('log'),
