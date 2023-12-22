@@ -85,7 +85,7 @@ const html = `
         </div>
       </div>
       <script>
-        const out = (type) => (str) => {            
+        const out = (type) => (...str) => {            
           window.top.postMessage({ origin: 'preview', type, message: str }, '*');
         }
         window.console = {
@@ -130,7 +130,7 @@ const Preview: React.FC<PreviewProps> = ({ err, code, setLogs }) => {
     setTimeout(() => {
       iframeRef.current.contentWindow.postMessage(code, "*");
     }, 50);
-  }, [iframeRef, code, setLogs]);
+  }, [iframeRef, code]);
 
   // get console output from preview and send
   // to console-feed component by setting the logs
