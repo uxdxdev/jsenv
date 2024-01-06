@@ -1,18 +1,20 @@
 import "./code-editor.css";
 import "./syntax.css";
-import React, { useState } from "react";
+import { useRef, useState } from "react";
 import MonacoEditor, { EditorDidMount } from "@monaco-editor/react";
+import prettier from "prettier";
+import parser from "prettier/parser-babel";
 import codeShift from "jscodeshift";
 import Highlighter from "monaco-jsx-highlighter";
 
 interface CodeEditorProps {
-  editorRef: React.MutableRefObject<any>;
   initialValue: string;
   onChange(value: string): void;
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({ editorRef, onChange, initialValue }) => {
+const CodeEditor: React.FC<CodeEditorProps> = ({ onChange, initialValue }) => {
   const [shareButtonLabel, setShareButtonLabel] = useState("Share");
+  const editorRef = useRef<any>();
 
   const onEditorDidMount: EditorDidMount = (getValue, monacoEditor) => {
     editorRef.current = monacoEditor;
@@ -36,8 +38,30 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ editorRef, onChange, initialVal
     );
   };
 
+  const onFormatClick = () => {
+    // get current value from editor
+    const unformatted = editorRef.current.getModel().getValue();
+
+    // format that value
+    const formatted = prettier
+      .format(unformatted, {
+        parser: "babel",
+        plugins: [parser],
+        useTabs: false,
+        semi: true,
+        singleQuote: true,
+      })
+      .replace(/\n$/, "");
+
+    // set the formatted value back in the editor
+    editorRef.current.setValue(formatted);
+  };
+
   return (
     <div className="editor-wrapper">
+      <button className="button button-format is-small is-primary is-light is-rounded" onClick={onFormatClick}>
+        Format
+      </button>
       <button
         className="button button-share is-small is-primary is-light is-rounded"
         onClick={() => {

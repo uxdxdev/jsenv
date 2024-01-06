@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import CodeEditor from "./code-editor";
 import Preview from "./preview";
 import bundle from "../bundler";
 import Resizable from "./resizable";
 import { Console } from "console-feed";
-import prettier from "prettier";
-import parser from "prettier/parser-babel";
 
 import "./code-cell.css";
 
@@ -110,32 +108,12 @@ const App = () => {
 
 ReactDOM.render(<App />, document.getElementById('root'));`;
 
-const formatEditorCode = (editorRef: React.MutableRefObject<any>) => {
-  // get current value from editor
-  const unformatted = editorRef.current.getModel().getValue();
-
-  // format that value
-  const formatted = prettier
-    .format(unformatted, {
-      parser: "babel",
-      plugins: [parser],
-      useTabs: false,
-      semi: true,
-      singleQuote: true,
-    })
-    .replace(/\n$/, "");
-
-  // set the formatted value back in the editor
-  editorRef.current.setValue(formatted);
-};
-
 const CodeCell = () => {
   const [code, setCode] = useState("");
   const [err, setErr] = useState("");
   const [input, setInput] = useState("");
   const [initialValue, setInitialValue] = useState("");
   const [logs, setLogs] = useState([]);
-  const editorRef = useRef<any>();
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -146,7 +124,6 @@ const CodeCell = () => {
       if (output) {
         setCode(output.code);
         setErr(output.err);
-        formatEditorCode(editorRef);
       }
     }, 2000);
 
@@ -171,7 +148,7 @@ const CodeCell = () => {
     <>
       <div id="code-cell">
         <Resizable>
-          <CodeEditor editorRef={editorRef} initialValue={initialValue} onChange={(value) => setInput(value)} />
+          <CodeEditor initialValue={initialValue} onChange={(value) => setInput(value)} />
         </Resizable>
         <Preview err={err} code={code} setLogs={setLogs} />
       </div>

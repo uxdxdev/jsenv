@@ -20,7 +20,7 @@
 .editor-wrapper .button-share {
   position: absolute;
   top: 5px;
-  right: 20px;
+  right: 95px;
   z-index: 20;
   opacity: 0;
   transition: opacity 0.3s;
